@@ -4,7 +4,7 @@ import java.util.Date;
 import java.util.Optional;
 
 public class UserProfileDTO {
-    private final Long id;
+    private Long id;
     private final String lastName;
     private final String firstName;
     private final String patronymic;
@@ -16,6 +16,10 @@ public class UserProfileDTO {
         this.firstName = firstName;
         this.patronymic = patronymic;
         this.birthdate = birthdate;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getFirstName() {

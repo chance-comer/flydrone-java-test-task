@@ -1,6 +1,8 @@
 package ru.flydrone.flydronejavatesttask;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -13,7 +15,10 @@ public class UserProfileController {
     }
 
     @PostMapping("/api/save-user-profile")
-    public long saveUserProfile(@RequestBody UserProfileDTO userProfile) {
-        return service.saveUserProfile(userProfile);
+    public ResponseEntity<Long> saveUserProfile(@RequestBody UserProfileDTO userProfile) {
+        Long userProfileId = service.saveUserProfile(userProfile);
+        var status = userProfile.getId() == null ? HttpStatus.CREATED : HttpStatus.OK;
+        //return service.saveUserProfile(userProfile);
+        return ResponseEntity.status(status).body(userProfileId);
     }
 }
