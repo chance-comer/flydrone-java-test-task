@@ -1,30 +1,40 @@
 package ru.flydrone.flydronejavatesttask;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.Date;
 
 public class UserProfileDTO {
     private Long id;
-    @NotBlank(message = "lastName cant't be empty")
-    private final String lastName;
-    @NotBlank(message = "firstName cant't be empty")
-    private final String firstName;
-    private final String patronymic;
-    @NotNull(message = "birthdate cant't be empty")
-    @Max((LocalDateTime.now()).minusMonths(12 * 18))
-    private final Date birthdate;
+    @NotBlank
+    private String lastName;
+    @NotBlank
+    private String firstName;
+    private String patronymic;
+    @NotNull
+    private LocalDate birthdate;
+    @JsonIgnore
+    @Min(18)
+    private Integer age;
 
-    public UserProfileDTO(Long id, String lastName, String firstName, String patronymic, Date birthdate) {
+    public UserProfileDTO(Long id, String lastName, String firstName, String patronymic, LocalDate birthdate) {
         this.id = id;
         this.lastName = lastName;
         this.firstName = firstName;
         this.patronymic = patronymic;
         this.birthdate = birthdate;
+        this.age = Period.between(birthdate, LocalDate.now()).getYears();
     }
+
+    public UserProfileDTO() {}
 
     public void setId(Long id) {
         this.id = id;
@@ -38,7 +48,7 @@ public class UserProfileDTO {
         return patronymic;
     }
 
-    public Date getBirthdate() {
+    public LocalDate getBirthdate() {
         return birthdate;
     }
 
@@ -48,5 +58,21 @@ public class UserProfileDTO {
 
     public String getLastName() {
         return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public void setPatronymic(String patronymic) {
+        this.patronymic = patronymic;
+    }
+
+    public void setBirthdate(LocalDate birthdate) {
+        this.birthdate = birthdate;
     }
 }

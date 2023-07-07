@@ -1,7 +1,9 @@
 package ru.flydrone.flydronejavatesttask;
 
+import java.util.Optional;
+
 public interface UserProfileService {
-    UserProfileDTO getUserProfile(long id);
-    long saveUserProfile(UserProfileDTO userProfile);
-    void deleteUserProfile(UserProfileDTO userProfile);
+    Optional<UserProfileDTO> getUserProfile(long id);
+    Optional<Long> saveUserProfile(UserProfileDTO userProfile);
+    int deleteUserProfile(Long id);
 }
