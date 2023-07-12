@@ -36,10 +36,6 @@ public class UserProfileDTO {
 
     public UserProfileDTO() {}
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public String getFirstName() {
         return firstName;
     }
@@ -58,6 +54,10 @@ public class UserProfileDTO {
 
     public String getLastName() {
         return lastName;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public void setLastName(String lastName) {

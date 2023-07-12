@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,24 +25,28 @@ public class UserProfileController {
     }
 
     @GetMapping("/api/profile/{id}")
-    public ResponseEntity<Optional<UserProfileDTO>> getUserProfile(@PathVariable Long id) {
+    public ResponseEntity<UserProfileDTO> getUserProfile(@PathVariable Long id) {
         Optional<UserProfileDTO> userProfile = service.getUserProfile(id);
-        var status = userProfile.isEmpty() ? HttpStatus.NOT_FOUND : HttpStatus.OK;
-        return ResponseEntity.status(status).body(userProfile);
+        return ResponseEntity.of(userProfile);
+    }
+
+    @PostMapping(value = "/api/avatar/{userProfileId}", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+    public ResponseEntity saveAvatar(@RequestBody MultipartFile avatar, @PathVariable Long userProfileId) {
+        Optional<Long> savedUserProfileId = service.saveAvatar(userProfileId, avatar);
+        var status = savedUserProfileId.isEmpty() ? HttpStatus.NOT_FOUND : HttpStatus.OK;
+        return ResponseEntity.status(status).build();
     }
 
     @PostMapping("/api/profile")
     public ResponseEntity<Long> saveUserProfile(@RequestBody @Valid UserProfileDTO userProfile) {
         Optional<Long> userProfileId = service.saveUserProfile(userProfile);
-        var status = userProfileId.isEmpty() ? HttpStatus.NOT_FOUND : HttpStatus.OK;
-        return ResponseEntity.status(status).body(userProfile.getId());
+        return ResponseEntity.of(userProfileId);
     }
 
     @DeleteMapping(value = "/api/profile/{id}")
     public ResponseEntity<Long> deleteUserProfile(@PathVariable Long id) {
-        int deletedRowCount = service.deleteUserProfile(id);
-        var status = deletedRowCount == 0 ? HttpStatus.NOT_FOUND : HttpStatus.OK;
-        return ResponseEntity.status(status).body(id);
+        Optional<Long> deletedUserProfileId = service.deleteUserProfile(id);
+        return ResponseEntity.of(deletedUserProfileId);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
