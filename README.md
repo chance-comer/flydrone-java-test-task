@@ -1,3 +1,12 @@
+Список переменных среды для работы:
+
+    FLYDRONE_JAVA_TEST_TASK_DB_PASSWORD
+    FLYDRONE_JAVA_TEST_TASK_DB_URL
+    FLYDRONE_JAVA_TEST_TASK_DB_USERNAME
+    
+    AWS_ACCESS_KEY_ID
+    AWS_SECRET_ACCESS_KEY
+
 ## Профиль
 
 #### Пример GET запроса:

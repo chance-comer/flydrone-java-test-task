@@ -1,34 +1,31 @@
 package ru.flydrone.flydronejavatesttask;
 
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.ObjectMetadata;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
-
-import static java.util.Map.entry;
 
 @Repository
 public class UserProfileRepositoryImpl implements UserProfileRepository {
     @Autowired
     private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+    private final YandexCloudRepository yandexCloudRepository;
+
+    @Autowired
+    UserProfileRepositoryImpl(YandexCloudRepository repository) {
+        this.yandexCloudRepository = repository;
+    }
 
     @Override
     public Optional<Long> saveUserProfile(UserProfileDTO userProfile) {
         Optional<Long> userProfileId = Optional.empty();
-        int updatedRowCount = 0;
 
         if (userProfile.getId() != null) {
+            int updatedRowCount;
             final String UPDATE_SQL =
                     "UPDATE flydrone_profile.user_profile SET" +
                             " first_name = :first_name," +
@@ -70,7 +67,7 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
 
     @Override
     public Optional<Long> deleteUserProfile(Long id) {
-        Optional<Long> deletedUserProfileId = Optional.empty();
+        Optional<Long> deletedUserProfileId;
         final String DELETE_SQL = "DELETE FROM flydrone_profile.user_profile WHERE id = :id";
         Map<String, Object> parameters = new HashMap<>(1);
         parameters.put("id", id);
@@ -110,6 +107,7 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
                 "FROM flydrone_profile.user_profile up " +
                 "LEFT JOIN flydrone_profile.avatar a ON a.user_profile_id = up.id " +
                 "WHERE id = :id";
+
         Map<String, Object> parameters = new HashMap<>(1);
         parameters.put("id", id);
         List<UserProfileWithAvatarDTO> userProfileWithAvatarList = namedParameterJdbcTemplate.query(SELECT_SQL, parameters, new UserProfileWithAvatarRowMapper());
@@ -119,8 +117,6 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
 
     @Override
     public Optional<Long> saveAvatar(Long userProfileId, MultipartFile avatar) {
-        Optional<Long> upsertedUserProfileId = Optional.empty();
-        final String bucketName = "bucket-user-profile-avatar";
         final String UPSERT_SQL = "INSERT INTO flydrone_profile.avatar (user_profile_id, external_id) " +
                 "VALUES (:user_profile_id, :external_id) " +
                 "ON CONFLICT (user_profile_id) DO UPDATE SET " +
@@ -129,52 +125,36 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
         Optional<UserProfileWithAvatarDTO> userProfileWithAvatar = getUserProfileWithAvatar(userProfileId);
 
         if (userProfileWithAvatar.isEmpty()) {
-            return upsertedUserProfileId;
+            return Optional.empty();
         }
 
-        /* AWSCredentials credentials = new BasicAWSCredentials(
-                "YCAJEGUZ5TZi1GN5uXeao0YTx",
-                "YCNtmSkY6IDkcGBJsmTyRDYgCs4ACZomGzFhRNc3"
-        ); */
-        AmazonS3 s3 = AmazonS3ClientBuilder.standard()
-                // .withCredentials(new AWSStaticCredentialsProvider(credentials))
-                .withEndpointConfiguration(
-                        new AmazonS3ClientBuilder.EndpointConfiguration(
-                                "storage.yandexcloud.net", "ru-central1"
-                        )
-                )
-                .build();
-        try {
-            final UUID externalId = java.util.UUID.randomUUID();
-            String existingAvatarExternalId = userProfileWithAvatar.get().getExternalAvatarId();
+        final UUID externalId = java.util.UUID.randomUUID();
 
-            if (existingAvatarExternalId != null) {
-                s3.deleteObject(bucketName, existingAvatarExternalId);
-            }
+        String existingAvatarExternalId = userProfileWithAvatar.get().getExternalAvatarId();
 
-            ObjectMetadata objectMetadata = new ObjectMetadata();
-            objectMetadata.setContentType(avatar.getContentType());
-            objectMetadata.setUserMetadata(Map.ofEntries(
-                    entry("fileName", avatar.getOriginalFilename())
-            ));
-
-            s3.putObject(
-                    bucketName,
-                    externalId.toString(),
-                    avatar.getInputStream(),
-                    objectMetadata
-            );
-
-            Map<String, Object> parameters = new HashMap<>(2);
-
-            parameters.put("user_profile_id", userProfileId);
-            parameters.put("external_id", externalId.toString());
-
-            namedParameterJdbcTemplate.update(UPSERT_SQL, parameters);
-            upsertedUserProfileId = Optional.of(userProfileId);
-        } catch (IOException ex) {
-
+        if (existingAvatarExternalId != null) {
+           Optional<String> deletedObjectExternalId = yandexCloudRepository.deleteObject(existingAvatarExternalId);
+           if (deletedObjectExternalId.isEmpty()) {
+               return Optional.empty();
+           }
         }
-        return upsertedUserProfileId;
+
+        Optional<String> savedObjectExternalId = yandexCloudRepository.saveObject(
+                externalId.toString(),
+                avatar
+        );
+
+        if (savedObjectExternalId.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Map<String, Object> parameters = new HashMap<>(2);
+
+        parameters.put("user_profile_id", userProfileId);
+        parameters.put("external_id", externalId.toString());
+
+        namedParameterJdbcTemplate.update(UPSERT_SQL, parameters);
+
+        return Optional.of(userProfileId);
     }
 }
