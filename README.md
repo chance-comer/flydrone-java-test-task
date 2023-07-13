@@ -35,4 +35,4 @@
 
 - Вставка (не указан id):
 
-        curl -i -F avatar="D:\downloads\avatar.jpg" http://localhost:8080/api/avatar/36
+        curl -i -F avatar=@D:/downloads/avatars.jpg http://localhost:8080/api/avatar/36

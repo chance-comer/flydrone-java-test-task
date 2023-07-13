@@ -1,6 +1,10 @@
 package ru.flydrone.flydronejavatesttask;
 
+import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
+import org.apache.tomcat.util.http.fileupload.FileUploadException;
+import org.apache.tomcat.util.http.fileupload.impl.SizeLimitExceededException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
@@ -9,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
@@ -31,7 +36,8 @@ public class UserProfileController {
     }
 
     @PostMapping(value = "/api/avatar/{userProfileId}", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
-    public ResponseEntity saveAvatar(@RequestBody MultipartFile avatar, @PathVariable Long userProfileId) {
+    public ResponseEntity saveAvatar(@RequestParam("avatar") @Size(max = 2 * 1024) MultipartFile avatar,
+                                     @PathVariable Long userProfileId) {
         Optional<Long> savedUserProfileId = service.saveAvatar(userProfileId, avatar);
         var status = savedUserProfileId.isEmpty() ? HttpStatus.NOT_FOUND : HttpStatus.OK;
         return ResponseEntity.status(status).build();

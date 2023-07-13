@@ -12,8 +12,11 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
+
+import static java.util.Map.entry;
 
 @Repository
 public class UserProfileRepositoryImpl implements UserProfileRepository {
@@ -78,7 +81,7 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
 
     @Override
     public Optional<UserProfileDTO> getUserProfile(Long id) {
-        final Optional<UserProfileDTO> userProfileDTO;
+        final Optional<UserProfileDTO> userProfile;
         final String SELECT_SQL = "SELECT " +
                 "first_name, " +
                 "last_name, " +
@@ -89,32 +92,52 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
                 "WHERE id = :id";
         Map<String, Object> parameters = new HashMap<>(1);
         parameters.put("id", id);
-        List<UserProfileDTO> userProfileDTOList = namedParameterJdbcTemplate.query(SELECT_SQL, parameters, new UserProfileRowMapper());
-        userProfileDTO = userProfileDTOList.size() > 0 ? Optional.of(userProfileDTOList.get(0)) : Optional.empty();
-        return userProfileDTO;
+        List<UserProfileDTO> userProfileList = namedParameterJdbcTemplate.query(SELECT_SQL, parameters, new UserProfileRowMapper());
+        userProfile = userProfileList.size() > 0 ? Optional.of(userProfileList.get(0)) : Optional.empty();
+        return userProfile;
+    }
+
+    @Override
+    public Optional<UserProfileWithAvatarDTO> getUserProfileWithAvatar(Long id) {
+        final Optional<UserProfileWithAvatarDTO> userProfileWithAvatar;
+        final String SELECT_SQL = "SELECT " +
+                "up.first_name, " +
+                "up.last_name, " +
+                "up.birthdate, " +
+                "up.id, " +
+                "up.patronymic, " +
+                "a.external_id avatar_external_id " +
+                "FROM flydrone_profile.user_profile up " +
+                "LEFT JOIN flydrone_profile.avatar a ON a.user_profile_id = up.id " +
+                "WHERE id = :id";
+        Map<String, Object> parameters = new HashMap<>(1);
+        parameters.put("id", id);
+        List<UserProfileWithAvatarDTO> userProfileWithAvatarList = namedParameterJdbcTemplate.query(SELECT_SQL, parameters, new UserProfileWithAvatarRowMapper());
+        userProfileWithAvatar = userProfileWithAvatarList.size() > 0 ? Optional.of(userProfileWithAvatarList.get(0)) : Optional.empty();
+        return userProfileWithAvatar;
     }
 
     @Override
     public Optional<Long> saveAvatar(Long userProfileId, MultipartFile avatar) {
         Optional<Long> upsertedUserProfileId = Optional.empty();
         final String bucketName = "bucket-user-profile-avatar";
-        final UUID uuid = java.util.UUID.randomUUID();
-        final String UPSERT_SQL = "INSERT INTO flydrone_profile.avatar (user_profile_id, file_name, file_base64)" +
-                "VALUES (:user_profile_id, :file_name, :external_id)" +
-                "ON CONFLICT (user_profile_id) DO UPDATE SET" +
-                "file_name = EXCLUDED.file_name," +
-                "file_base64 = EXCLUDED.file_base64";
+        final String UPSERT_SQL = "INSERT INTO flydrone_profile.avatar (user_profile_id, external_id) " +
+                "VALUES (:user_profile_id, :external_id) " +
+                "ON CONFLICT (user_profile_id) DO UPDATE SET " +
+                "external_id = EXCLUDED.external_id";
 
-        if (getUserProfile(userProfileId).isEmpty()) {
+        Optional<UserProfileWithAvatarDTO> userProfileWithAvatar = getUserProfileWithAvatar(userProfileId);
+
+        if (userProfileWithAvatar.isEmpty()) {
             return upsertedUserProfileId;
         }
 
-        AWSCredentials credentials = new BasicAWSCredentials(
+        /* AWSCredentials credentials = new BasicAWSCredentials(
                 "YCAJEGUZ5TZi1GN5uXeao0YTx",
                 "YCNtmSkY6IDkcGBJsmTyRDYgCs4ACZomGzFhRNc3"
-        );
+        ); */
         AmazonS3 s3 = AmazonS3ClientBuilder.standard()
-                .withCredentials(new AWSStaticCredentialsProvider(credentials))
+                // .withCredentials(new AWSStaticCredentialsProvider(credentials))
                 .withEndpointConfiguration(
                         new AmazonS3ClientBuilder.EndpointConfiguration(
                                 "storage.yandexcloud.net", "ru-central1"
@@ -122,17 +145,30 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
                 )
                 .build();
         try {
+            final UUID externalId = java.util.UUID.randomUUID();
+            String existingAvatarExternalId = userProfileWithAvatar.get().getExternalAvatarId();
+
+            if (existingAvatarExternalId != null) {
+                s3.deleteObject(bucketName, existingAvatarExternalId);
+            }
+
+            ObjectMetadata objectMetadata = new ObjectMetadata();
+            objectMetadata.setContentType(avatar.getContentType());
+            objectMetadata.setUserMetadata(Map.ofEntries(
+                    entry("fileName", avatar.getOriginalFilename())
+            ));
+
             s3.putObject(
                     bucketName,
-                    uuid.toString(),
+                    externalId.toString(),
                     avatar.getInputStream(),
-                    new ObjectMetadata()
+                    objectMetadata
             );
 
-            Map<String, Object> parameters = new HashMap<>(3);
+            Map<String, Object> parameters = new HashMap<>(2);
+
             parameters.put("user_profile_id", userProfileId);
-            parameters.put("file_name", avatar.getName());
-            parameters.put("external_id", uuid.toString());
+            parameters.put("external_id", externalId.toString());
 
             namedParameterJdbcTemplate.update(UPSERT_SQL, parameters);
             upsertedUserProfileId = Optional.of(userProfileId);
