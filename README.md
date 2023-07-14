@@ -42,6 +42,14 @@
 
 #### Пример POST запроса:
 
-- Вставка (не указан id):
+- Вставка или обновление:
 
-        curl -i -F avatar=@D:/downloads/avatars.jpg http://localhost:8080/api/avatar/36
+        curl -i --request POST -F avatar=@D:/downloads/avatars.jpg http://localhost:8080/api/avatar/36
+
+#### Пример GET запроса:
+
+    curl --request GET http://localhost:8080/api/avatar/36 --output "D:/downloads/avatar"
+
+#### Пример DELETE запроса:
+   
+   curl -i --request DELETE http://localhost:8080/api/avatar/36

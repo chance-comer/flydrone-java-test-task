@@ -2,12 +2,16 @@ package ru.flydrone.flydronejavatesttask;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.S3ObjectResource;
 import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.S3Object;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 import java.util.Optional;
 
@@ -51,7 +55,10 @@ public class YandexCloudRepositoryImpl implements YandexCloudRepository {
     }
 
     @Override
-    public Optional<MultipartFile> getObject(String id) {
-        return Optional.empty();
+    public Optional<S3Object> getObject(String id) {
+        if (yandexCloudS3Client.doesObjectExist(bucketName, id)) {
+            return Optional.of(yandexCloudS3Client.getObject(bucketName, id));
+        }
+        else return Optional.empty();
     }
 }

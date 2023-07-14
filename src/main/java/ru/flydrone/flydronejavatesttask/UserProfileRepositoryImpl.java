@@ -1,11 +1,16 @@
 package ru.flydrone.flydronejavatesttask;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import com.amazonaws.services.s3.model.S3Object;
 
 import java.util.*;
 
@@ -67,18 +72,19 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
 
     @Override
     public Optional<Long> deleteUserProfile(Long id) {
-        Optional<Long> deletedUserProfileId;
+        Optional<Long> deletedAvatarUserProfileId = deleteAvatar(id);
+        if (deletedAvatarUserProfileId.isEmpty()) {
+            return Optional.empty();
+        }
         final String DELETE_SQL = "DELETE FROM flydrone_profile.user_profile WHERE id = :id";
         Map<String, Object> parameters = new HashMap<>(1);
         parameters.put("id", id);
         int deletedRowCount = namedParameterJdbcTemplate.update(DELETE_SQL, parameters);
-        deletedUserProfileId = deletedRowCount == 0 ? Optional.empty() : Optional.of(id);
-        return deletedUserProfileId;
+        return deletedRowCount == 0 ? Optional.empty() : Optional.of(id);
     }
 
     @Override
     public Optional<UserProfileDTO> getUserProfile(Long id) {
-        final Optional<UserProfileDTO> userProfile;
         final String SELECT_SQL = "SELECT " +
                 "first_name, " +
                 "last_name, " +
@@ -89,14 +95,15 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
                 "WHERE id = :id";
         Map<String, Object> parameters = new HashMap<>(1);
         parameters.put("id", id);
-        List<UserProfileDTO> userProfileList = namedParameterJdbcTemplate.query(SELECT_SQL, parameters, new UserProfileRowMapper());
-        userProfile = userProfileList.size() > 0 ? Optional.of(userProfileList.get(0)) : Optional.empty();
-        return userProfile;
+        try {
+            return Optional.of(namedParameterJdbcTemplate.queryForObject(SELECT_SQL, parameters, new UserProfileRowMapper()));
+        } catch (IncorrectResultSizeDataAccessException ex) {
+            return Optional.empty();
+        }
     }
 
     @Override
     public Optional<UserProfileWithAvatarDTO> getUserProfileWithAvatar(Long id) {
-        final Optional<UserProfileWithAvatarDTO> userProfileWithAvatar;
         final String SELECT_SQL = "SELECT " +
                 "up.first_name, " +
                 "up.last_name, " +
@@ -110,9 +117,12 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
 
         Map<String, Object> parameters = new HashMap<>(1);
         parameters.put("id", id);
-        List<UserProfileWithAvatarDTO> userProfileWithAvatarList = namedParameterJdbcTemplate.query(SELECT_SQL, parameters, new UserProfileWithAvatarRowMapper());
-        userProfileWithAvatar = userProfileWithAvatarList.size() > 0 ? Optional.of(userProfileWithAvatarList.get(0)) : Optional.empty();
-        return userProfileWithAvatar;
+
+        try {
+            return Optional.of(namedParameterJdbcTemplate.queryForObject(SELECT_SQL, parameters, new UserProfileWithAvatarRowMapper()));
+        } catch (IncorrectResultSizeDataAccessException ex) {
+            return Optional.empty();
+        }
     }
 
     @Override
@@ -132,13 +142,6 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
 
         String existingAvatarExternalId = userProfileWithAvatar.get().getExternalAvatarId();
 
-        if (existingAvatarExternalId != null) {
-           Optional<String> deletedObjectExternalId = yandexCloudRepository.deleteObject(existingAvatarExternalId);
-           if (deletedObjectExternalId.isEmpty()) {
-               return Optional.empty();
-           }
-        }
-
         Optional<String> savedObjectExternalId = yandexCloudRepository.saveObject(
                 externalId.toString(),
                 avatar
@@ -153,8 +156,54 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
         parameters.put("user_profile_id", userProfileId);
         parameters.put("external_id", externalId.toString());
 
-        namedParameterJdbcTemplate.update(UPSERT_SQL, parameters);
+        try {
+            namedParameterJdbcTemplate.update(UPSERT_SQL, parameters);
+        } catch (DataAccessException ex) {
+            yandexCloudRepository.deleteObject(externalId.toString());
+            return Optional.empty();
+        }
+
+        if (existingAvatarExternalId != null) {
+            yandexCloudRepository.deleteObject(existingAvatarExternalId);
+        }
 
         return Optional.of(userProfileId);
+    }
+
+    @Override
+    public Optional<S3Object> getAvatar(Long userProfileId) {
+        final Optional<String> avatarExternalId;
+        final String SELECT_SQL = "SELECT " +
+                "external_id " +
+                "FROM flydrone_profile.avatar " +
+                "WHERE user_profile_id = :user_profile_id";
+        Map<String, Object> parameters = new HashMap<>(1);
+        parameters.put("user_profile_id", userProfileId);
+        try {
+            avatarExternalId = Optional.of(namedParameterJdbcTemplate.queryForObject(SELECT_SQL, parameters, String.class));
+            return yandexCloudRepository.getObject(avatarExternalId.get());
+        } catch (IncorrectResultSizeDataAccessException ex) {
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public Optional<Long> deleteAvatar(Long userProfileId) {
+        Optional<UserProfileWithAvatarDTO> userProfileWithAvatar = getUserProfileWithAvatar(userProfileId);
+        if (userProfileWithAvatar.isEmpty() || userProfileWithAvatar.get().getExternalAvatarId() == null) {
+            return Optional.empty();
+        }
+        Optional<String> deletedAvatarExternalId = yandexCloudRepository
+                .deleteObject(userProfileWithAvatar.get().getExternalAvatarId());
+
+        if (deletedAvatarExternalId.isEmpty()) {
+            return Optional.empty();
+        }
+
+        final String DELETE_SQL = "DELETE FROM flydrone_profile.avatar WHERE user_profile_id = :user_profile_id";
+        Map<String, Object> parameters = new HashMap<>(1);
+        parameters.put("user_profile_id", userProfileId);
+        int deletedRowCount = namedParameterJdbcTemplate.update(DELETE_SQL, parameters);
+        return deletedRowCount == 0 ? Optional.empty() : Optional.of(userProfileId);
     }
 }

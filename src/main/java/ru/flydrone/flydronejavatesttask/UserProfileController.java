@@ -1,11 +1,13 @@
 package ru.flydrone.flydronejavatesttask;
 
+import com.amazonaws.services.s3.model.S3Object;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.apache.tomcat.util.http.fileupload.impl.SizeLimitExceededException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -38,9 +40,30 @@ public class UserProfileController {
     @PostMapping(value = "/api/avatar/{userProfileId}", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity saveAvatar(@RequestParam("avatar") @Size(max = 2 * 1024) MultipartFile avatar,
                                      @PathVariable Long userProfileId) {
-        Optional<Long> savedUserProfileId = service.saveAvatar(userProfileId, avatar);
-        var status = savedUserProfileId.isEmpty() ? HttpStatus.NOT_FOUND : HttpStatus.OK;
-        return ResponseEntity.status(status).build();
+        Optional<Long> savedAvatarUserProfileId = service.saveAvatar(userProfileId, avatar);
+        return ResponseEntity.of(savedAvatarUserProfileId);
+    }
+
+    @GetMapping("/api/avatar/{userProfileId}")
+    public ResponseEntity<Optional<InputStreamResource>> getAvatar(@PathVariable Long userProfileId) {
+        Optional<S3Object> avatar = service.getAvatar(userProfileId);
+        if (avatar.isEmpty()) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND).body(Optional.empty());
+        }
+        String contentType = avatar.get().getObjectMetadata().getContentType();
+        MediaType mediaType = MediaType.parseMediaType(contentType);
+        Optional<InputStreamResource> body = Optional.of(new InputStreamResource(avatar.get().getObjectContent()));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .contentType(mediaType)
+                .body(body);
+    }
+
+    @DeleteMapping(value = "/api/avatar/{userProfileId}")
+    public ResponseEntity<Long> deleteAvatar(@PathVariable Long userProfileId) {
+        Optional<Long> deletedAvatarUserProfileId = service.deleteAvatar(userProfileId);
+        return ResponseEntity.of(deletedAvatarUserProfileId);
     }
 
     @PostMapping("/api/profile")
