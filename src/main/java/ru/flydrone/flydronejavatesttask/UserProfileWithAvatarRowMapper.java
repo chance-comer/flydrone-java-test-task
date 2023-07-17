@@ -8,14 +8,11 @@ import java.sql.SQLException;
 public class UserProfileWithAvatarRowMapper implements RowMapper<UserProfileWithAvatarDTO> {
     @Override
     public UserProfileWithAvatarDTO mapRow(ResultSet rs, int rowNum) throws SQLException {
-        UserProfileWithAvatarDTO userProfileWithAvatar = new UserProfileWithAvatarDTO();
+        UserProfileRowMapper userProfileRowMapper = new UserProfileRowMapper();
+        UserProfileDTO userProfile = userProfileRowMapper.mapRow(rs, rowNum);
 
-        userProfileWithAvatar.setId(rs.getLong("ID"));
-        userProfileWithAvatar.setFirstName(rs.getString("FIRST_NAME"));
-        userProfileWithAvatar.setLastName(rs.getString("LAST_NAME"));
-        userProfileWithAvatar.setBirthdate(rs.getDate("BIRTHDATE").toLocalDate());
-        userProfileWithAvatar.setPatronymic(rs.getString("PATRONYMIC"));
-        userProfileWithAvatar.setAvatarExternalId(rs.getString("AVATAR_EXTERNAL_ID"));
+        UserProfileWithAvatarDTO userProfileWithAvatar = new UserProfileWithAvatarDTO(userProfile);
+        userProfileWithAvatar.setAvatarExternalId(rs.getString("AVATAR_FILE_ID"));
 
         return userProfileWithAvatar;
     }

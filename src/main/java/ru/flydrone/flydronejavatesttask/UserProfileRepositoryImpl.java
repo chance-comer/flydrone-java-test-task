@@ -9,6 +9,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import com.amazonaws.services.s3.model.S3Object;
 
@@ -71,6 +72,7 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
     }
 
     @Override
+    @Transactional
     public Optional<Long> deleteUserProfile(Long id) {
         Optional<Long> deletedAvatarUserProfileId = deleteAvatar(id);
         if (deletedAvatarUserProfileId.isEmpty()) {
@@ -105,14 +107,13 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
     @Override
     public Optional<UserProfileWithAvatarDTO> getUserProfileWithAvatar(Long id) {
         final String SELECT_SQL = "SELECT " +
-                "up.first_name, " +
-                "up.last_name, " +
-                "up.birthdate, " +
-                "up.id, " +
-                "up.patronymic, " +
-                "a.external_id avatar_external_id " +
-                "FROM flydrone_profile.user_profile up " +
-                "LEFT JOIN flydrone_profile.avatar a ON a.user_profile_id = up.id " +
+                "first_name, " +
+                "last_name, " +
+                "birthdate, " +
+                "id, " +
+                "patronymic, " +
+                "avatar_file_id " +
+                "FROM flydrone_profile.user_profile " +
                 "WHERE id = :id";
 
         Map<String, Object> parameters = new HashMap<>(1);
@@ -126,12 +127,8 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
     }
 
     @Override
+    @Transactional
     public Optional<Long> saveAvatar(Long userProfileId, MultipartFile avatar) {
-        final String UPSERT_SQL = "INSERT INTO flydrone_profile.avatar (user_profile_id, external_id) " +
-                "VALUES (:user_profile_id, :external_id) " +
-                "ON CONFLICT (user_profile_id) DO UPDATE SET " +
-                "external_id = EXCLUDED.external_id";
-
         Optional<UserProfileWithAvatarDTO> userProfileWithAvatar = getUserProfileWithAvatar(userProfileId);
 
         if (userProfileWithAvatar.isEmpty()) {
@@ -140,42 +137,85 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
 
         final UUID externalId = java.util.UUID.randomUUID();
 
-        String existingAvatarExternalId = userProfileWithAvatar.get().getExternalAvatarId();
-
         Optional<String> savedObjectExternalId = yandexCloudRepository.saveObject(
                 externalId.toString(),
                 avatar
         );
 
-        if (savedObjectExternalId.isEmpty()) {
-            return Optional.empty();
-        }
+        final String INSERT_FILE_SQL = "INSERT INTO flydrone.file (external_id) " +
+                "VALUES :external_id";
 
-        Map<String, Object> parameters = new HashMap<>(2);
+        Map<String, Object> parameters = new HashMap<>(1);
+        parameters.put("external_id", savedObjectExternalId.get());
+        namedParameterJdbcTemplate.update(INSERT_FILE_SQL, parameters);
 
+        final String UPDATE_OLD_FILE_SQL = "UPDATE flydrone.file SET is_deleted = TRUE " +
+                "WHERE external_id = :external_id";
+
+        parameters = new HashMap<>(1);
+        parameters.put("external_id", userProfileWithAvatar.get().getExternalAvatarId());
+        namedParameterJdbcTemplate.update(UPDATE_OLD_FILE_SQL, parameters);
+
+        final String UPDATE_USER_PROFILE_SQL = "UPDATE flydrone_profile.user_profile " +
+                "SET avatar_file_id = :avatar_file_id " +
+                "WHERE id = :user_profile_id";
+
+        parameters = new HashMap<>(2);
         parameters.put("user_profile_id", userProfileId);
-        parameters.put("external_id", externalId.toString());
+        parameters.put("avatar_file_id", savedObjectExternalId.get());
+        int updatedRowCount = namedParameterJdbcTemplate.update(UPDATE_USER_PROFILE_SQL, parameters);
 
-        try {
-            namedParameterJdbcTemplate.update(UPSERT_SQL, parameters);
-        } catch (DataAccessException ex) {
-            yandexCloudRepository.deleteObject(externalId.toString());
-            return Optional.empty();
-        }
+        return updatedRowCount == 0 ? Optional.empty() : Optional.of(userProfileId);
 
-        if (existingAvatarExternalId != null) {
-            yandexCloudRepository.deleteObject(existingAvatarExternalId);
-        }
-
-        return Optional.of(userProfileId);
+//        final String UPSERT_SQL = "INSERT INTO flydrone_profile.avatar (user_profile_id, external_id) " +
+//                "VALUES (:user_profile_id, :external_id) " +
+//                "ON CONFLICT (user_profile_id) DO UPDATE SET " +
+//                "external_id = EXCLUDED.external_id";
+//
+//        Optional<UserProfileWithAvatarDTO> userProfileWithAvatar = getUserProfileWithAvatar(userProfileId);
+//
+//        if (userProfileWithAvatar.isEmpty()) {
+//            return Optional.empty();
+//        }
+//
+//        final UUID externalId = java.util.UUID.randomUUID();
+//
+//        String existingAvatarExternalId = userProfileWithAvatar.get().getExternalAvatarId();
+//
+//        Optional<String> savedObjectExternalId = yandexCloudRepository.saveObject(
+//                externalId.toString(),
+//                avatar
+//        );
+//
+//        if (savedObjectExternalId.isEmpty()) {
+//            return Optional.empty();
+//        }
+//
+//        Map<String, Object> parameters = new HashMap<>(2);
+//
+//        parameters.put("user_profile_id", userProfileId);
+//        parameters.put("external_id", externalId.toString());
+//
+//        try {
+//            namedParameterJdbcTemplate.update(UPSERT_SQL, parameters);
+//        } catch (DataAccessException ex) {
+//            yandexCloudRepository.deleteObject(externalId.toString());
+//            return Optional.empty();
+//        }
+//
+//        if (existingAvatarExternalId != null) {
+//            yandexCloudRepository.deleteObject(existingAvatarExternalId);
+//        }
+//
+//        return Optional.of(userProfileId);
     }
 
     @Override
     public Optional<S3Object> getAvatar(Long userProfileId) {
         final Optional<String> avatarExternalId;
         final String SELECT_SQL = "SELECT " +
-                "external_id " +
-                "FROM flydrone_profile.avatar " +
+                "avatar_file_id " +
+                "FROM flydrone_profile.user_profile " +
                 "WHERE user_profile_id = :user_profile_id";
         Map<String, Object> parameters = new HashMap<>(1);
         parameters.put("user_profile_id", userProfileId);
@@ -188,22 +228,42 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
     }
 
     @Override
+    @Transactional
     public Optional<Long> deleteAvatar(Long userProfileId) {
         Optional<UserProfileWithAvatarDTO> userProfileWithAvatar = getUserProfileWithAvatar(userProfileId);
-        if (userProfileWithAvatar.isEmpty() || userProfileWithAvatar.get().getExternalAvatarId() == null) {
-            return Optional.empty();
-        }
-        Optional<String> deletedAvatarExternalId = yandexCloudRepository
-                .deleteObject(userProfileWithAvatar.get().getExternalAvatarId());
+        String fileExternalId = userProfileWithAvatar.map(u ->  u.getExternalAvatarId()).orElse(null);
 
-        if (deletedAvatarExternalId.isEmpty()) {
-            return Optional.empty();
-        }
-
-        final String DELETE_SQL = "DELETE FROM flydrone_profile.avatar WHERE user_profile_id = :user_profile_id";
-        Map<String, Object> parameters = new HashMap<>(1);
+        final String UPDATE_USER_PROFILE_SQL = "UPDATE flydrone_profile.user_profile " +
+                "SET avatar_file_id = NULL " +
+                "WHERE user_profile_id = :user_profile_id";
+                Map<String, Object> parameters = new HashMap<>(1);
         parameters.put("user_profile_id", userProfileId);
-        int deletedRowCount = namedParameterJdbcTemplate.update(DELETE_SQL, parameters);
-        return deletedRowCount == 0 ? Optional.empty() : Optional.of(userProfileId);
+        int updatedRowCount = namedParameterJdbcTemplate.update(UPDATE_USER_PROFILE_SQL, parameters);
+
+        final String UPDATE_FILE_SQL = "UPDATE flydrone.file " +
+                "SET is_deleted = TRUE " +
+                "WHERE external_id = :file_external_id";
+        parameters = new HashMap<>(1);
+        parameters.put("file_external_id", fileExternalId);
+        namedParameterJdbcTemplate.update(UPDATE_FILE_SQL, parameters);
+
+        return updatedRowCount == 0 ? Optional.empty() : Optional.of(userProfileId);
+
+//        Optional<UserProfileWithAvatarDTO> userProfileWithAvatar = getUserProfileWithAvatar(userProfileId);
+//        if (userProfileWithAvatar.isEmpty() || userProfileWithAvatar.get().getExternalAvatarId() == null) {
+//            return Optional.empty();
+//        }
+//        Optional<String> deletedAvatarExternalId = yandexCloudRepository
+//                .deleteObject(userProfileWithAvatar.get().getExternalAvatarId());
+//
+//        if (deletedAvatarExternalId.isEmpty()) {
+//            return Optional.empty();
+//        }
+//
+//        final String DELETE_SQL = "DELETE FROM flydrone_profile.avatar WHERE user_profile_id = :user_profile_id";
+//        Map<String, Object> parameters = new HashMap<>(1);
+//        parameters.put("user_profile_id", userProfileId);
+//        int deletedRowCount = namedParameterJdbcTemplate.update(DELETE_SQL, parameters);
+//        return deletedRowCount == 0 ? Optional.empty() : Optional.of(userProfileId);
     }
 }
