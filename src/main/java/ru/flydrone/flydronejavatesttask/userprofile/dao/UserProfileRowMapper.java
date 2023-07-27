@@ -1,6 +1,7 @@
-package ru.flydrone.flydronejavatesttask;
+package ru.flydrone.flydronejavatesttask.userprofile.dao;
 
 import org.springframework.jdbc.core.RowMapper;
+import ru.flydrone.flydronejavatesttask.userprofile.dto.UserProfileDTO;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

@@ -1,4 +1,4 @@
-package ru.flydrone.flydronejavatesttask;
+package ru.flydrone.flydronejavatesttask.yandexcloud;
 
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;

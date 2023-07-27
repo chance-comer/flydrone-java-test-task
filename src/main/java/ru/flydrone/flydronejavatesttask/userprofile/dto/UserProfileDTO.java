@@ -1,4 +1,4 @@
-package ru.flydrone.flydronejavatesttask;
+package ru.flydrone.flydronejavatesttask.userprofile.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.Min;
@@ -17,9 +17,6 @@ public class UserProfileDTO {
     private String patronymic;
     @NotNull
     private LocalDate birthdate;
-    @JsonIgnore
-    @Min(18)
-    private Integer age;
 
     public UserProfileDTO(Long id, String lastName, String firstName, String patronymic, LocalDate birthdate) {
         this.id = id;
@@ -27,7 +24,6 @@ public class UserProfileDTO {
         this.firstName = firstName;
         this.patronymic = patronymic;
         this.birthdate = birthdate;
-        this.age = Period.between(birthdate, LocalDate.now()).getYears();
     }
 
     public UserProfileDTO() {}

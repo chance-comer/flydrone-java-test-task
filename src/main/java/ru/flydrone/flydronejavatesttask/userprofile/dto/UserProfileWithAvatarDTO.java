@@ -1,4 +1,4 @@
-package ru.flydrone.flydronejavatesttask;
+package ru.flydrone.flydronejavatesttask.userprofile.dto;
 
 public class UserProfileWithAvatarDTO extends UserProfileDTO {
     private String avatarExternalId;

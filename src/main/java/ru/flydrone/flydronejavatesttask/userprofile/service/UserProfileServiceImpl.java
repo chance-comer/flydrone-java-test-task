@@ -1,12 +1,13 @@
-package ru.flydrone.flydronejavatesttask;
+package ru.flydrone.flydronejavatesttask.userprofile.service;
 
 import com.amazonaws.services.s3.model.S3Object;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import ru.flydrone.flydronejavatesttask.userprofile.dao.UserProfileRepository;
+import ru.flydrone.flydronejavatesttask.userprofile.dto.UserProfileDTO;
+import ru.flydrone.flydronejavatesttask.userprofile.validator.UserProfileValidator;
 
-import java.io.InputStream;
 import java.util.Optional;
 
 @Service
@@ -25,7 +26,19 @@ public class UserProfileServiceImpl implements UserProfileService {
 
     @Override
     public Optional<Long> saveUserProfile(UserProfileDTO userProfile) {
-        return repository.saveUserProfile(userProfile);
+        new UserProfileValidator(userProfile).validate();
+        Long userProfileId = userProfile.getId();
+        if (userProfileId != null) {
+            Optional<UserProfileDTO> existingUserProfile = repository.getUserProfile(userProfile.getId());
+            if (existingUserProfile.isEmpty()) {
+                return Optional.empty();
+            } else {
+                repository.updateUserProfile(userProfile);
+            }
+        } else {
+            userProfileId = repository.insertUserProfile(userProfile);
+        }
+        return Optional.of(userProfileId);
     }
 
     @Override

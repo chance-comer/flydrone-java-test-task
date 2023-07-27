@@ -1,17 +1,17 @@
-package ru.flydrone.flydronejavatesttask;
+package ru.flydrone.flydronejavatesttask.userprofile.dao;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.dao.DataAccessException;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import com.amazonaws.services.s3.model.S3Object;
+import ru.flydrone.flydronejavatesttask.userprofile.dto.UserProfileWithAvatarDTO;
+import ru.flydrone.flydronejavatesttask.userprofile.dto.UserProfileWithAvatarRowMapper;
+import ru.flydrone.flydronejavatesttask.userprofile.dto.UserProfileDTO;
+import ru.flydrone.flydronejavatesttask.yandexcloud.dao.YandexCloudRepository;
 
 import java.util.*;
 
@@ -24,6 +24,47 @@ public class UserProfileRepositoryImpl implements UserProfileRepository {
     @Autowired
     UserProfileRepositoryImpl(YandexCloudRepository repository) {
         this.yandexCloudRepository = repository;
+    }
+
+    @Override
+    public void updateUserProfile(UserProfileDTO userProfile) {
+        final String UPDATE_SQL =
+                "UPDATE flydrone_profile.user_profile SET" +
+                        " first_name = :first_name," +
+                        " last_name = :last_name," +
+                        " patronymic = :patronymic," +
+                        " birthdate = :birthdate" +
+                        " WHERE id = :id;";
+
+        Map<String, Object> parameters = new HashMap<>(5);
+        parameters.put("first_name", userProfile.getFirstName());
+        parameters.put("last_name", userProfile.getLastName());
+        parameters.put("patronymic", userProfile.getPatronymic());
+        parameters.put("birthdate", userProfile.getBirthdate());
+        parameters.put("id", userProfile.getId());
+
+        namedParameterJdbcTemplate.update(UPDATE_SQL, parameters);
+    }
+
+    @Override
+    public Long insertUserProfile(UserProfileDTO userProfile) {
+        final Long userProfileId;
+
+        Map<String, Object> parameters = new HashMap<>(4);
+        parameters.put("first_name", userProfile.getFirstName());
+        parameters.put("last_name", userProfile.getLastName());
+        parameters.put("patronymic", userProfile.getPatronymic());
+        parameters.put("birthdate", userProfile.getBirthdate());
+
+        SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(this.namedParameterJdbcTemplate.getJdbcTemplate())
+                .withSchemaName("flydrone_profile")
+                .withTableName("user_profile")
+                .usingGeneratedKeyColumns("id");
+
+        userProfileId = simpleJdbcInsert.executeAndReturnKey(parameters).longValue();
+        userProfile.setId(userProfileId);
+
+        return userProfileId;
     }
 
     @Override
