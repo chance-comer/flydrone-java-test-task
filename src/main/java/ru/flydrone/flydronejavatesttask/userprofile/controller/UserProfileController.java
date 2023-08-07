@@ -26,48 +26,19 @@ public class UserProfileController {
 
     @GetMapping("/api/profile/{id}")
     public ResponseEntity<UserProfileDTO> getUserProfile(@PathVariable Long id) {
-        Optional<UserProfileDTO> userProfile = service.getUserProfile(id);
-        return ResponseEntity.of(userProfile);
-    }
-
-    @PostMapping(value = "/api/avatar/{userProfileId}", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
-    public ResponseEntity saveAvatar(@RequestParam("avatar") @Size(max = 2 * 1024) MultipartFile avatar,
-                                     @PathVariable Long userProfileId) {
-        Optional<Long> savedAvatarUserProfileId = service.saveAvatar(userProfileId, avatar);
-        return ResponseEntity.of(savedAvatarUserProfileId);
-    }
-
-    @GetMapping("/api/avatar/{userProfileId}")
-    public ResponseEntity<Optional<InputStreamResource>> getAvatar(@PathVariable Long userProfileId) {
-        Optional<S3Object> avatar = service.getAvatar(userProfileId);
-        if (avatar.isEmpty()) {
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND).body(Optional.empty());
-        }
-        String contentType = avatar.get().getObjectMetadata().getContentType();
-        MediaType mediaType = MediaType.parseMediaType(contentType);
-        Optional<InputStreamResource> body = Optional.of(new InputStreamResource(avatar.get().getObjectContent()));
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .contentType(mediaType)
-                .body(body);
-    }
-
-    @DeleteMapping(value = "/api/avatar/{userProfileId}")
-    public ResponseEntity<Long> deleteAvatar(@PathVariable Long userProfileId) {
-        Optional<Long> deletedAvatarUserProfileId = service.deleteAvatar(userProfileId);
-        return ResponseEntity.of(deletedAvatarUserProfileId);
+        UserProfileDTO userProfile = service.getUserProfile(id);
+        return ResponseEntity.status(HttpStatus.OK).body(userProfile);
     }
 
     @PostMapping("/api/profile")
     public ResponseEntity<Long> saveUserProfile(@RequestBody @Valid UserProfileDTO userProfile) {
-        Optional<Long> userProfileId = service.saveUserProfile(userProfile);
-        return ResponseEntity.of(userProfileId);
+        Long userProfileId = service.saveUserProfile(userProfile);
+        return ResponseEntity.status(HttpStatus.OK).body(userProfileId);
     }
 
     @DeleteMapping(value = "/api/profile/{id}")
-    public ResponseEntity<Long> deleteUserProfile(@PathVariable Long id) {
-        Optional<Long> deletedUserProfileId = service.deleteUserProfile(id);
-        return ResponseEntity.of(deletedUserProfileId);
+    public ResponseEntity deleteUserProfile(@PathVariable Long id) {
+        service.deleteUserProfile(id);
+        return new ResponseEntity(HttpStatus.OK);
     }
 }

@@ -7,6 +7,7 @@ import com.amazonaws.services.s3.model.S3Object;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.multipart.MultipartFile;
+import ru.flydrone.flydronejavatesttask.DataNotFoundException;
 
 import java.io.IOException;
 import java.util.Map;
@@ -52,10 +53,12 @@ public class YandexCloudRepositoryImpl implements YandexCloudRepository {
     }
 
     @Override
-    public Optional<S3Object> getObject(String id) {
+    public Optional<S3Object> getObject(String id) throws DataNotFoundException {
         if (yandexCloudS3Client.doesObjectExist(bucketName, id)) {
             return Optional.of(yandexCloudS3Client.getObject(bucketName, id));
         }
-        else return Optional.empty();
+        else {
+            return Optional.empty();
+        }
     }
 }

@@ -12,11 +12,11 @@ public class UserProfileWithAvatarDTO extends UserProfileDTO {
     }
 
     public UserProfileWithAvatarDTO(UserProfileDTO userProfileDTO) {
-        this.setId(userProfileDTO.getId());
-        this.setBirthdate(userProfileDTO.getBirthdate());
-        this.setFirstName(userProfileDTO.getFirstName());
-        this.setLastName(userProfileDTO.getLastName());
-        this.setPatronymic(userProfileDTO.getPatronymic());
+        super(userProfileDTO.getId(),
+                userProfileDTO.getLastName(),
+                userProfileDTO.getFirstName(),
+                userProfileDTO.getPatronymic(),
+                userProfileDTO.getBirthdate());
     }
 
     public UserProfileWithAvatarDTO() {

@@ -10,11 +10,10 @@ import java.util.Optional;
 public interface UserProfileRepository {
     void updateUserProfile(UserProfileDTO userProfile);
     Long insertUserProfile(UserProfileDTO userProfile);
-    Optional<Long> saveUserProfile(UserProfileDTO userProfile);
-    Optional<Long> deleteUserProfile(Long id);
+    void updateAvatarId(Long userProfileId, String avatarId);
+    // Optional<Long> saveUserProfile(UserProfileDTO userProfile);
+    void deleteUserProfile(Long id);
     Optional<UserProfileDTO> getUserProfile(Long id);
     Optional<UserProfileWithAvatarDTO> getUserProfileWithAvatar(Long id);
-    Optional<Long> saveAvatar(Long userProfileId, MultipartFile avatar);
-    Optional<S3Object> getAvatar(Long userProfileId);
-    Optional<Long> deleteAvatar(Long userProfileId);
+    void deleteAvatar(Long userProfileId);
 }
