@@ -1,7 +1,6 @@
 package ru.flydrone.flydronejavatesttask.userprofile.dao;
 
 import org.springframework.jdbc.core.RowMapper;
-import ru.flydrone.flydronejavatesttask.userprofile.dao.UserProfileRowMapper;
 import ru.flydrone.flydronejavatesttask.userprofile.dto.UserProfileDTO;
 import ru.flydrone.flydronejavatesttask.userprofile.dto.UserProfileWithAvatarDTO;
 

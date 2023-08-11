@@ -4,13 +4,12 @@ import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.multipart.MultipartFile;
 import ru.flydrone.flydronejavatesttask.ValidationException;
-import ru.flydrone.flydronejavatesttask.userprofile.dto.UserProfileDTO;
 
 import java.util.List;
 
 public class AvatarValidator {
     final List<MimeType> VALID_AVATAR_TYPE = List.of(MimeTypeUtils.IMAGE_JPEG, MimeTypeUtils.IMAGE_PNG);
-    final int MAX_AVATAR_SIZE = 2 * 1024;
+    final int MAX_AVATAR_SIZE = 2 * 1024 * 1024;
 
     private final MultipartFile avatar;
 
@@ -24,7 +23,9 @@ public class AvatarValidator {
     }
 
     public void validateMimeType() {
-        if (!VALID_AVATAR_TYPE.contains(avatar.getContentType())) {
+        String t = avatar.getContentType();
+        Boolean b = VALID_AVATAR_TYPE.contains(MimeType.valueOf(avatar.getContentType()));
+        if (!VALID_AVATAR_TYPE.contains(MimeType.valueOf(avatar.getContentType()))) {
             throw new ValidationException("File must have JPG or PNG format");
         }
     }

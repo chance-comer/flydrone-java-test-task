@@ -1,13 +1,15 @@
 package ru.flydrone.flydronejavatesttask.userprofile.dao;
 
-import com.amazonaws.services.s3.model.S3Object;
-import org.springframework.web.multipart.MultipartFile;
+import ru.flydrone.flydronejavatesttask.userprofile.dto.UserProfileWithAvatarDTO;
 
 import java.util.Optional;
 
 public interface AvatarRepository {
-    // Optional<Long> saveAvatar(Long userProfileId, MultipartFile avatar);
-    void insertAvatar(Long userProfileId, String avatarId);
-    // Optional<String> getAvatarId(Long userProfileId);
-    void deleteAvatar(String avatarId);
+    //    void insertAvatar(Long userProfileId, String avatarId);
+//    void deleteAvatar(String avatarId);
+    Optional<UserProfileWithAvatarDTO> getUserProfileWithAvatar(Long id);
+
+    void updateAvatarId(Long userProfileId, String avatarId);
+
+    void deleteAvatar(Long userProfileId);
 }

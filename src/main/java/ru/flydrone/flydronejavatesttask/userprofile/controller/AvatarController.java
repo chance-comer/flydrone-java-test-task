@@ -1,21 +1,16 @@
 package ru.flydrone.flydronejavatesttask.userprofile.controller;
 
 import com.amazonaws.services.s3.model.S3Object;
-import jakarta.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ru.flydrone.flydronejavatesttask.userprofile.service.AvatarService;
-import ru.flydrone.flydronejavatesttask.userprofile.service.UserProfileService;
 
-import java.util.Optional;
-
-@Controller
+@RestController
 public class AvatarController {
     private final AvatarService service;
 
@@ -32,12 +27,12 @@ public class AvatarController {
     }
 
     @GetMapping("/api/avatar/{userProfileId}")
-    public ResponseEntity<Optional<InputStreamResource>> getAvatar(@PathVariable Long userProfileId) {
+    public ResponseEntity<InputStreamResource> getAvatar(@PathVariable Long userProfileId) {
         S3Object avatar = service.getAvatar(userProfileId);
 
         String contentType = avatar.getObjectMetadata().getContentType();
         MediaType mediaType = MediaType.parseMediaType(contentType);
-        Optional<InputStreamResource> body = Optional.of(new InputStreamResource(avatar.getObjectContent()));
+        InputStreamResource body = new InputStreamResource(avatar.getObjectContent());
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .contentType(mediaType)

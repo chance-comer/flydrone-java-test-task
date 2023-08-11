@@ -1,19 +1,13 @@
 package ru.flydrone.flydronejavatesttask.userprofile.controller;
 
-import com.amazonaws.services.s3.model.S3Object;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import ru.flydrone.flydronejavatesttask.userprofile.dto.UserProfileDTO;
 import ru.flydrone.flydronejavatesttask.userprofile.service.UserProfileService;
 
-import java.util.Optional;
+import javax.validation.Valid;
 
 @RestController
 public class UserProfileController {
