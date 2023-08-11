@@ -54,7 +54,7 @@ public class AvatarRepositoryImpl implements AvatarRepository {
     public void deleteAvatar(Long userProfileId) {
         final String UPDATE_USER_PROFILE_SQL = "UPDATE flydrone_profile.user_profile " +
                 "SET avatar_file_id = NULL " +
-                "WHERE user_profile_id = :user_profile_id";
+                "WHERE id = :user_profile_id";
         Map<String, Object> parameters = new HashMap<>(1);
         parameters.put("user_profile_id", userProfileId);
         namedParameterJdbcTemplate.update(UPDATE_USER_PROFILE_SQL, parameters);

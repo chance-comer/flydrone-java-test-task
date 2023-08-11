@@ -19,7 +19,7 @@ public class UserProfileValidator {
 
     private void validateAge() {
         if (Period.between(userProfile.getBirthdate(), LocalDate.now()).getYears() < 18) {
-            throw new ValidationException("Age must be more or equal then 18 years");
+            throw new ValidationException("Age must be more or equal than 18 years");
         }
     }
 }

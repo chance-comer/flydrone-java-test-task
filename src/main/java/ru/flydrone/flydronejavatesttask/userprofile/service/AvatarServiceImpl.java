@@ -33,22 +33,22 @@ public class AvatarServiceImpl implements AvatarService {
         UserProfileWithAvatarDTO userProfileWithAvatar = avatarRepository.getUserProfileWithAvatar(userProfileId)
                 .orElseThrow(() -> new DataNotFoundException("User profile not found", userProfileId));
 
-        String externalAvatarId = userProfileWithAvatar.getExternalAvatarId();
+        String avatarFileId = userProfileWithAvatar.getExternalAvatarId();
 
-        if (externalAvatarId != null) {
-            yandexCloudService.deleteObject(externalAvatarId);
-        }
-
-        final UUID externalId = java.util.UUID.randomUUID();
+        final UUID newAvatarFileId = java.util.UUID.randomUUID();
 
         yandexCloudService.saveObject(
-                externalId.toString(),
+                newAvatarFileId.toString(),
                 avatar
         );
 
-        avatarRepository.updateAvatarId(userProfileId, externalId.toString());
+        avatarRepository.updateAvatarId(userProfileId, newAvatarFileId.toString());
 
-        return externalId.toString();
+        if (avatarFileId != null) {
+            yandexCloudService.deleteObject(avatarFileId);
+        }
+
+        return newAvatarFileId.toString();
     }
 
     @Override
@@ -71,12 +71,12 @@ public class AvatarServiceImpl implements AvatarService {
         UserProfileWithAvatarDTO userProfileWithAvatar = avatarRepository.getUserProfileWithAvatar(userProfileId)
                 .orElseThrow(() -> new DataNotFoundException("User profile not found", userProfileId));
 
-//        if (userProfileWithAvatar.get().getExternalAvatarId() == null) {
+//        if (userProfileWithAvatar.getExternalAvatarId() == null) {
 //            throw new DataNotFoundException("Avatar not found");
 //        }
 
-          avatarRepository.deleteAvatar(userProfileId);
-          yandexCloudService.deleteObject(userProfileWithAvatar.getExternalAvatarId());
+        avatarRepository.deleteAvatar(userProfileId);
+        yandexCloudService.deleteObject(userProfileWithAvatar.getExternalAvatarId());
     }
 
     @Override

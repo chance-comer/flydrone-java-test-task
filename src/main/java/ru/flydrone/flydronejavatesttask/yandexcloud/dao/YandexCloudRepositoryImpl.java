@@ -19,10 +19,9 @@ import static java.util.Map.entry;
 public class YandexCloudRepositoryImpl implements YandexCloudRepository {
     @Autowired
     private AmazonS3 yandexCloudS3Client;
-    final String bucketName = "bucket-user-profile-avatar";
 
     @Override
-    public void saveObject(String id, InputStream file, String contentType, String fileName) {
+    public void saveObject(String bucketName, String id, InputStream file, String contentType, String fileName) {
         ObjectMetadata objectMetadata = new ObjectMetadata();
         objectMetadata.setContentType(contentType);
         objectMetadata.setUserMetadata(Map.ofEntries(
@@ -33,12 +32,12 @@ public class YandexCloudRepositoryImpl implements YandexCloudRepository {
     }
 
     @Override
-    public void deleteObject(String id) {
-        yandexCloudS3Client.deleteObject(bucketName, id);
+    public void deleteObject(String bucketName, String id) {
+            yandexCloudS3Client.deleteObject(bucketName, id);
     }
 
     @Override
-    public Optional<S3Object> getObject(String id) throws DataNotFoundException {
+    public Optional<S3Object> getObject(String bucketName, String id) throws DataNotFoundException {
         if (yandexCloudS3Client.doesObjectExist(bucketName, id)) {
             return Optional.of(yandexCloudS3Client.getObject(bucketName, id));
         }

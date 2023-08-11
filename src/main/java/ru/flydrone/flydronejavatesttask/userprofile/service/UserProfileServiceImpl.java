@@ -43,8 +43,6 @@ public class UserProfileServiceImpl implements UserProfileService {
     @Override
     @Transactional
     public void deleteUserProfile(Long id) {
-        avatarService.getUserProfileWithAvatar(id);
-
         avatarService.deleteAvatar(id);
         userProfileRepository.deleteUserProfile(id);
     }
