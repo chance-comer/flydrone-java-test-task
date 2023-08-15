@@ -3,6 +3,7 @@ package ru.flydrone.flydronejavatesttask.userprofile.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import ru.flydrone.flydronejavatesttask.DataNotFoundException;
 import ru.flydrone.flydronejavatesttask.userprofile.dao.UserProfileRepository;
 import ru.flydrone.flydronejavatesttask.userprofile.dto.UserProfileDTO;
@@ -22,7 +23,7 @@ public class UserProfileServiceImpl implements UserProfileService {
 
     @Override
     public UserProfileDTO getUserProfile(Long id) {
-        return userProfileRepository.getUserProfile(id).orElseThrow(() -> new DataNotFoundException("User profile not found", id));
+        return userProfileRepository.getUserProfile(id).orElseThrow(() -> new DataNotFoundException(UserProfileDTO.resourceNotFoundMessage, id));
     }
 
     @Override
@@ -32,11 +33,18 @@ public class UserProfileServiceImpl implements UserProfileService {
         if (userProfileId != null) {
             UserProfileDTO existingUserProfile = userProfileRepository
                     .getUserProfile(userProfileId)
-                    .orElseThrow(() -> new DataNotFoundException("User profile not found", userProfile.getId()));
+                    .orElseThrow(() -> new DataNotFoundException(UserProfileDTO.resourceNotFoundMessage, userProfile.getId()));
             userProfileRepository.updateUserProfile(userProfile);
         } else {
             userProfileId = userProfileRepository.insertUserProfile(userProfile);
         }
+        return userProfileId;
+    }
+
+    @Override
+    public Long saveFullUserProfile(UserProfileDTO userProfile, MultipartFile avatar) {
+        Long userProfileId = saveUserProfile(userProfile);
+        avatarService.saveAvatar(userProfileId, avatar);
         return userProfileId;
     }
 

@@ -31,7 +31,7 @@ public class AvatarServiceImpl implements AvatarService {
         new AvatarValidator(avatar).validate();
 
         UserProfileWithAvatarDTO userProfileWithAvatar = avatarRepository.getUserProfileWithAvatar(userProfileId)
-                .orElseThrow(() -> new DataNotFoundException("User profile not found", userProfileId));
+                .orElseThrow(() -> new DataNotFoundException(UserProfileWithAvatarDTO.resourceNotFoundMessage, userProfileId));
 
         String avatarFileId = userProfileWithAvatar.getExternalAvatarId();
 
@@ -54,10 +54,10 @@ public class AvatarServiceImpl implements AvatarService {
     @Override
     public S3Object getAvatar(Long userProfileId) {
         UserProfileWithAvatarDTO userProfileWithAvatar = avatarRepository.getUserProfileWithAvatar(userProfileId)
-                .orElseThrow(() -> new DataNotFoundException("User profile not found", userProfileId));
+                .orElseThrow(() -> new DataNotFoundException(UserProfileWithAvatarDTO.resourceNotFoundMessage, userProfileId));
 
         if (userProfileWithAvatar.getExternalAvatarId() == null) {
-            throw new DataNotFoundException("Avatar not found");
+            throw new DataNotFoundException(UserProfileWithAvatarDTO.avatarNotFoundMessage);
         }
 
         String avatarId = userProfileWithAvatar.getExternalAvatarId();
@@ -69,7 +69,7 @@ public class AvatarServiceImpl implements AvatarService {
     @Transactional
     public void deleteAvatar(Long userProfileId) {
         UserProfileWithAvatarDTO userProfileWithAvatar = avatarRepository.getUserProfileWithAvatar(userProfileId)
-                .orElseThrow(() -> new DataNotFoundException("User profile not found", userProfileId));
+                .orElseThrow(() -> new DataNotFoundException(UserProfileWithAvatarDTO.resourceNotFoundMessage, userProfileId));
 
 //        if (userProfileWithAvatar.getExternalAvatarId() == null) {
 //            throw new DataNotFoundException("Avatar not found");
@@ -82,6 +82,6 @@ public class AvatarServiceImpl implements AvatarService {
     @Override
     public UserProfileWithAvatarDTO getUserProfileWithAvatar(Long id) {
         return avatarRepository.getUserProfileWithAvatar(id)
-                .orElseThrow(() -> new DataNotFoundException("User profile not found", id));
+                .orElseThrow(() -> new DataNotFoundException(UserProfileWithAvatarDTO.resourceNotFoundMessage, id));
     }
 }

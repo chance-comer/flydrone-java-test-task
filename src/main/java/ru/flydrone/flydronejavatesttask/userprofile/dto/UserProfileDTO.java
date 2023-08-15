@@ -14,6 +14,8 @@ public class UserProfileDTO {
     @NotNull
     private LocalDate birthdate;
 
+    public static String resourceNotFoundMessage = "User profile not found";
+
     public UserProfileDTO(Long id, String lastName, String firstName, String patronymic, LocalDate birthdate) {
         this.id = id;
         this.lastName = lastName;

@@ -17,6 +17,7 @@ public class YandexCloudServiceImpl implements YandexCloudService {
     private AmazonS3 yandexCloudS3Client;
     YandexCloudRepository yandexCloudRepository;
     final String bucketName = "bucket-user-profile-avatar";
+    public final static String resourceNotFoundMessage = "File not found in repository";
 
     public YandexCloudServiceImpl(YandexCloudRepository yandexCloudRepository) {
         this.yandexCloudRepository = yandexCloudRepository;
@@ -43,6 +44,6 @@ public class YandexCloudServiceImpl implements YandexCloudService {
 
     @Override
     public S3Object getObject(String id) {
-        return yandexCloudRepository.getObject(bucketName, id).orElseThrow(() -> new DataNotFoundException("File not found in repository", id));
+        return yandexCloudRepository.getObject(bucketName, id).orElseThrow(() -> new DataNotFoundException(resourceNotFoundMessage, id));
     }
 }

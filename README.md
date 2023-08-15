@@ -38,18 +38,54 @@
 
         curl -i --request POST -H "Content-type: application/json" --data '{"lastName":"anikin","birthdate":"2004-07-06"}' http://localhost:8080/api/profile
 
+- Вставка профиля с аватаром
+
+        curl -i --request POST -H "Content-Type: multipart/form-data" -F "avatar=@D:/downloads/avatars.jpg" -F "userprofile={\"lastName\":\"puskin\",\"firstName\":\"alex\",\"birthdate\":\"1950-07-06\"};type=application/json" http://localhost:8080/api/fullprofile
+
+- Обновление профиля с аватаром
+
+        curl -i --request POST -H "Content-Type: multipart/form-data" -F "avatar=@D:/downloads/avatars.jpg" -F "userprofile={\"lastName\":\"puskin\",\"firstName\":\"alex\",\"birthdate\":\"1950-07-06\",\"id\":\"42\"};type=application/json" http://localhost:8080/api/fullprofile
+
 ## Аватар
 
 #### Пример POST запроса:
 
-- Вставка или обновление:
+- Вставка или обновление аватара несуществующего пользователя:
 
         curl -i --request POST -F avatar=@D:/downloads/avatars.jpg http://localhost:8080/api/avatar/36
 
+- Вставка или обновление аватара с превышением максимального размера файла (более 2 Мб)
+
+        curl -i --request POST -F avatar=@D:/downloads/large_avatar.jpg http://localhost:8080/api/avatar/12      
+
+- Вставка или обновление аватара с типом, отличным от PNG и JPG
+
+        curl -i --request POST -F avatar=@D:/downloads/gif_avatar.gif http://localhost:8080/api/avatar/12 
+
+- Корректная вставка или обновление аватара
+
+        curl -i --request POST -F avatar=@D:/downloads/avatars.jpg http://localhost:8080/api/avatar/12 
+
 #### Пример GET запроса:
 
-    curl --request GET http://localhost:8080/api/avatar/36 --output "D:/downloads/avatar"
+- При отсутствии пользователя
+
+        curl --request GET http://localhost:8080/api/avatar/36 --output "D:/downloads/avatar"
+
+- При отсутствии аватара у существующего пользователя
+
+        curl --request GET http://localhost:8080/api/avatar/14 --output "D:/downloads/avatar"
+
+- При наличии и пользователя, и аватара
+
+        curl --request GET http://localhost:8080/api/avatar/12 --output "D:/downloads/avatar"
 
 #### Пример DELETE запроса:
    
-   curl -i --request DELETE http://localhost:8080/api/avatar/36
+- При наличии пользователя
+
+        curl -i --request DELETE http://localhost:8080/api/avatar/12
+
+- При отсутствии пользователя
+
+        curl -i --request DELETE http://localhost:8080/api/avatar/36

@@ -3,6 +3,8 @@ package ru.flydrone.flydronejavatesttask.userprofile.dto;
 public class UserProfileWithAvatarDTO extends UserProfileDTO {
     private String avatarExternalId;
 
+    public static String avatarNotFoundMessage = "Avatar not found";
+
     public String getExternalAvatarId() {
         return avatarExternalId;
     }
