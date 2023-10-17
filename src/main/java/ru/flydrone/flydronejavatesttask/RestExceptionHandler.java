@@ -29,18 +29,18 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler
     public ResponseEntity<Object> handleValidationException(
             ValidationException ex, WebRequest request) {
         return handleExceptionInternal(ex, ex.getMessage(),
-                new HttpHeaders(), HttpStatus.SERVICE_UNAVAILABLE, request);
+                new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
     }
 
     @ExceptionHandler(DataNotFoundException.class)
-    public ResponseEntity<Object> handleValidationException(
+    public ResponseEntity<Object> handleDataNotFoundException(
             DataNotFoundException ex, WebRequest request) {
         return handleExceptionInternal(ex, ex.getMessage(),
                 new HttpHeaders(), HttpStatus.NOT_FOUND, request);
     }
 
     @ExceptionHandler(AmazonServiceException.class)
-    public ResponseEntity<Object> handleValidationException(
+    public ResponseEntity<Object> handleAmazonServiceException(
             AmazonServiceException ex, WebRequest request) {
         return handleExceptionInternal(ex, ex.getMessage(),
                 new HttpHeaders(), HttpStatus.SERVICE_UNAVAILABLE, request);

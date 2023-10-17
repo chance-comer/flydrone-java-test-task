@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import ru.flydrone.flydronejavatesttask.userprofile.service.AvatarService;
 
 @RestController
+@RequestMapping("/api/avatar/{userProfileId}")
 public class AvatarController {
     private final AvatarService service;
 
@@ -19,14 +20,13 @@ public class AvatarController {
         this.service = service;
     }
 
-    @PostMapping(value = "/api/avatar/{userProfileId}", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
-    public ResponseEntity saveAvatar(@RequestParam("avatar") MultipartFile avatar,
+    @PostMapping(consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+    public void saveAvatar(@RequestParam("avatar") MultipartFile avatar,
                                      @PathVariable Long userProfileId) {
-        String savedAvatarExternalId = service.saveAvatar(userProfileId, avatar);
-        return new ResponseEntity(HttpStatus.OK);
+        service.saveAvatar(userProfileId, avatar);
     }
 
-    @GetMapping("/api/avatar/{userProfileId}")
+    @GetMapping
     public ResponseEntity<InputStreamResource> getAvatar(@PathVariable Long userProfileId) {
         S3Object avatar = service.getAvatar(userProfileId);
 
@@ -39,9 +39,8 @@ public class AvatarController {
                 .body(body);
     }
 
-    @DeleteMapping(value = "/api/avatar/{userProfileId}")
-    public ResponseEntity deleteAvatar(@PathVariable Long userProfileId) {
+    @DeleteMapping
+    public void deleteAvatar(@PathVariable Long userProfileId) {
         service.deleteAvatar(userProfileId);
-        return new ResponseEntity(HttpStatus.OK);
     }
 }

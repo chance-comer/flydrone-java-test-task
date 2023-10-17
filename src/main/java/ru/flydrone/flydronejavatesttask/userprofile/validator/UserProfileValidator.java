@@ -8,6 +8,7 @@ import java.time.Period;
 
 public class UserProfileValidator {
     private final UserProfileDTO userProfile;
+    private final int MIN_AGE = 18;
 
     public UserProfileValidator(UserProfileDTO userProfile) {
         this.userProfile = userProfile;
@@ -18,7 +19,7 @@ public class UserProfileValidator {
     }
 
     private void validateAge() {
-        if (Period.between(userProfile.getBirthdate(), LocalDate.now()).getYears() < 18) {
+        if (Period.between(userProfile.getBirthdate(), LocalDate.now()).getYears() < MIN_AGE) {
             throw new ValidationException("Age must be more or equal than 18 years");
         }
     }

@@ -40,11 +40,11 @@
 
 - Вставка профиля с аватаром
 
-        curl -i --request POST -H "Content-Type: multipart/form-data" -F "avatar=@D:/downloads/avatars.jpg" -F "userprofile={\"lastName\":\"puskin\",\"firstName\":\"alex\",\"birthdate\":\"1950-07-06\"};type=application/json" http://localhost:8080/api/fullprofile
+        curl -i --request POST -H "Content-Type: multipart/form-data" -F "avatar=@D:/downloads/avatars.jpg" -F "userprofile={\"lastName\":\"puskin\",\"firstName\":\"alex\",\"birthdate\":\"1950-07-06\"};type=application/json" http://localhost:8080/api/profile/full
 
 - Обновление профиля с аватаром
 
-        curl -i --request POST -H "Content-Type: multipart/form-data" -F "avatar=@D:/downloads/avatars.jpg" -F "userprofile={\"lastName\":\"puskin\",\"firstName\":\"alex\",\"birthdate\":\"1950-07-06\",\"id\":\"42\"};type=application/json" http://localhost:8080/api/fullprofile
+        curl -i --request POST -H "Content-Type: multipart/form-data" -F "avatar=@D:/downloads/avatars.jpg" -F "userprofile={\"lastName\":\"puskin\",\"firstName\":\"alex\",\"birthdate\":\"1950-07-06\",\"id\":\"42\"};type=application/json" http://localhost:8080/api/profile/full
 
 ## Аватар
 
