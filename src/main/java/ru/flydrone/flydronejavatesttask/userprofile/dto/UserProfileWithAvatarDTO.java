@@ -21,7 +21,4 @@ public class UserProfileWithAvatarDTO extends UserProfileDTO {
                 userProfileDTO.getBirthdate());
     }
 
-    public UserProfileWithAvatarDTO() {
-
-    }
 }

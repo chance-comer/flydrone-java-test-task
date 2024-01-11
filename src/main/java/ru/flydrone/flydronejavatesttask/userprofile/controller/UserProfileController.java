@@ -1,10 +1,9 @@
 package ru.flydrone.flydronejavatesttask.userprofile.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -58,10 +57,10 @@ public class UserProfileController {
                     @ApiResponse(responseCode = "400", description = "Профиль не прошел валидацию"),
                     @ApiResponse(responseCode = "404", description = "Профиль с указанным id не найден",
                             content = @Content(mediaType = "text/plain; charset=utf-8")),
-                    @ApiResponse(responseCode = "503", description = "Ошибка при выполнении запроса на обновление")
+                    @ApiResponse(responseCode = "503", description = "Ошибка серверпри выполнении запроса на обновление")
             })
     @PostMapping(value = "/full", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    public Long saveFullUserProfile(@RequestPart("userprofile") @Valid UserProfileDTO userProfile,
+    public Long saveFullUserProfile(@Parameter() @RequestPart("userprofile") @Valid UserProfileDTO userProfile,
                                     @RequestPart("avatar") MultipartFile avatar) {
         return service.saveFullUserProfile(userProfile, avatar);
     }

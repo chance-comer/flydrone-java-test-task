@@ -56,11 +56,11 @@ public class AvatarServiceImpl implements AvatarService {
         UserProfileWithAvatarDTO userProfileWithAvatar = avatarRepository.getUserProfileWithAvatar(userProfileId)
                 .orElseThrow(() -> new DataNotFoundException(UserProfileWithAvatarDTO.resourceNotFoundMessage, userProfileId));
 
-        if (userProfileWithAvatar.getExternalAvatarId() == null) {
+        String avatarId = userProfileWithAvatar.getExternalAvatarId();
+
+        if (avatarId == null) {
             throw new DataNotFoundException(UserProfileWithAvatarDTO.avatarNotFoundMessage);
         }
-
-        String avatarId = userProfileWithAvatar.getExternalAvatarId();
 
         return yandexCloudService.getObject(avatarId);
     }
@@ -75,8 +75,12 @@ public class AvatarServiceImpl implements AvatarService {
 //            throw new DataNotFoundException("Avatar not found");
 //        }
 
-        avatarRepository.deleteAvatar(userProfileId);
-        yandexCloudService.deleteObject(userProfileWithAvatar.getExternalAvatarId());
+        String externalAvatarId = userProfileWithAvatar.getExternalAvatarId();
+
+        if (externalAvatarId != null) {
+            avatarRepository.deleteAvatar(userProfileId);
+            yandexCloudService.deleteObject(externalAvatarId);
+        }
     }
 
     @Override

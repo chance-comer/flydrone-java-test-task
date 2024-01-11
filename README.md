@@ -1,4 +1,4 @@
-Список переменных среды для работы:
+### Список переменных среды для работы:
 
     FLYDRONE_JAVA_TEST_TASK_DB_PASSWORD
     FLYDRONE_JAVA_TEST_TASK_DB_URL
@@ -6,6 +6,22 @@
     
     AWS_ACCESS_KEY_ID
     AWS_SECRET_ACCESS_KEY
+
+### Структура базы:
+
+Схема `flydrone_profile`  
+Таблица `user_profile`
+
+Поля:
+
+`id` - `BIGINT` - идентификатор профиля  
+`last_name` - `TEXT` - фамилия  
+`first_name` - `TEXT` - имя  
+`patronymic` - `TEXT` - отчество  
+`birthdate` - `DATE` - дата рождения  
+`avatar_file_id` - `TEXT` - ссылка на аватар. Сами файлы хранятся в Яндекс Облаке  
+
+# Примеры запросов (cmd curl)
 
 ## Профиль
 

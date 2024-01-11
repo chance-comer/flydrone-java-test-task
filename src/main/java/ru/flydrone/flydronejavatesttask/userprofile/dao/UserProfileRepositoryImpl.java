@@ -5,7 +5,6 @@ import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
-import ru.flydrone.flydronejavatesttask.userprofile.dto.UserProfileWithAvatarDTO;
 import ru.flydrone.flydronejavatesttask.userprofile.dto.UserProfileDTO;
 
 import java.util.*;

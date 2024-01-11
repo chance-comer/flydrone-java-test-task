@@ -1,8 +1,6 @@
 package ru.flydrone.flydronejavatesttask.yandexcloud.dao;
 
 import com.amazonaws.services.s3.model.S3Object;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
 import java.util.Optional;

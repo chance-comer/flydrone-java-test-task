@@ -5,10 +5,7 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3Object;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-import org.springframework.web.multipart.MultipartFile;
-import ru.flydrone.flydronejavatesttask.DataNotFoundException;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Optional;
@@ -33,11 +30,13 @@ public class YandexCloudRepositoryImpl implements YandexCloudRepository {
 
     @Override
     public void deleteObject(String bucketName, String id) {
+        if (yandexCloudS3Client.doesObjectExist(bucketName, id)) {
             yandexCloudS3Client.deleteObject(bucketName, id);
+        }
     }
 
     @Override
-    public Optional<S3Object> getObject(String bucketName, String id) throws DataNotFoundException {
+    public Optional<S3Object> getObject(String bucketName, String id) {
         if (yandexCloudS3Client.doesObjectExist(bucketName, id)) {
             return Optional.of(yandexCloudS3Client.getObject(bucketName, id));
         }

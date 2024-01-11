@@ -5,7 +5,6 @@ import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.flydrone.flydronejavatesttask.userprofile.dto.UserProfileWithAvatarDTO;
-import ru.flydrone.flydronejavatesttask.yandexcloud.dao.YandexCloudRepository;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -60,32 +59,4 @@ public class AvatarRepositoryImpl implements AvatarRepository {
         namedParameterJdbcTemplate.update(UPDATE_USER_PROFILE_SQL, parameters);
     }
 
-//    @Autowired
-//    private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
-//    private final YandexCloudRepository yandexCloudRepository;
-//
-//    @Autowired
-//    AvatarRepositoryImpl(YandexCloudRepository repository) {
-//        this.yandexCloudRepository = repository;
-//    }
-//
-//    @Override
-//    public void insertAvatar(Long userProfileId, String avatarId) {
-//        final String INSERT_FILE_SQL = "INSERT INTO flydrone.file (external_id) " +
-//                "VALUES :external_id";
-//
-//        Map<String, Object> parameters = new HashMap<>(1);
-//        parameters.put("external_id", avatarId);
-//        namedParameterJdbcTemplate.update(INSERT_FILE_SQL, parameters);
-//    }
-//
-//    @Override
-//    public void deleteAvatar(String avatarId) {
-//        final String UPDATE_OLD_FILE_SQL = "UPDATE flydrone.file SET is_deleted = TRUE " +
-//                "WHERE external_id = :external_id";
-//
-//        Map<String, Object> parameters = new HashMap<>(1);
-//        parameters.put("external_id", avatarId);
-//        namedParameterJdbcTemplate.update(UPDATE_OLD_FILE_SQL, parameters);
-//    }
-        }
+}
